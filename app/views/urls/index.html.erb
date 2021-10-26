@@ -1,9 +1,6 @@
-<% if flash[:notice] %>
-  <div class="card-panel notice deep-orange"><%= flash[:notice] %></div>
-<% end %>
 <div class="row">
   <div class="col m12">
-    <%= form_for @url do |f| %>
+    <%= form_with model:@url do |f| %>
       <div class="card">
         <div class="card-content">
           <div class="row">
@@ -13,10 +10,10 @@
           </div>
           <div class="row">
             <div class="col m6 offset-m2">
-              <%= f.text_field :original_url, class: 'validate form-control', placeholder: 'Your original URL here' %>
+              <%= f.text_field :original_url, class: 'validate form-control', placeholder: 'Your original URL here' , id:'urlinp' %>
             </div>
             <div class="col m2">
-              <button type="submit" class="waves-effect waves-light btn">Shorten URL</button>
+              <%= f.submit 'Shorten URL', class:'waves-effect waves-light btn text-white' %>
             </div>
           </div>
         </div>
@@ -37,10 +34,18 @@
   <tbody>
     <% @urls.each do |url| %>
       <tr>
-        <th scope="row"><a href="http://127.0.0.1:3002/ABCDE">http://127.0.0.1:3002/ABCDE</a></th>
-        <td><a href="https://drive.google.com/file/d/1VdLgSSMojWFb1GRoBAFX_eXy7oX2J">drive.google.com/file/d/1VdLgSS...</a></td>
-        <td><!-- Please match the same format -->Feb 24, 2021</td>
-        <td><%= (0..10).to_a.sample %></td>
+        <th scope="row"><a href="http://127.0.0.1:3000/<%= url.short_url %>" target="_blank"><%= "http://127.0.0.1:3000/" + url.short_url %></a></th>
+        <td>
+          <a href="<%= url.original_url %>">
+            <% if url.original_url.length > 35 %>
+              <%= url.original_url[...35] + '...' %>
+            <% else %>
+              <%= url.original_url %>
+            <% end %>
+          </a>
+        </td>
+        <td><%= url.created_at.to_s[...10] %></td>
+        <td><%= url.clicks_count %></td>
         <td>
           <a href="<%= url_path(url.short_url) %>">
             <svg class="octicon octicon-graph" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">

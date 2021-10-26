@@ -5,4 +5,6 @@ Rails.application.routes.draw do
 
   resources :urls, only: %i[index create show], param: :url
   get ':short_url', to: 'urls#visit', as: :visit
+  get '/getlinks/last10', to: 'api#getlinks'
+
 end

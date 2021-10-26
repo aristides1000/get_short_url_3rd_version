@@ -1,52 +1,62 @@
-# frozen_string_literal: true
+require "browser"
 
 class UrlsController < ApplicationController
   def index
-    # recent 10 short urls
     @url = Url.new
-    @urls = [
-      Url.new(short_url: 'ABCDE', original_url: 'http://google.com', created_at: Time.now),
-      Url.new(short_url: 'ABCDG', original_url: 'http://facebook.com', created_at: Time.now),
-      Url.new(short_url: 'ABCDF', original_url: 'http://yahoo.com', created_at: Time.now)
-    ]
+    @urls =  Url.all.order('created_at DESC').limit(10)
   end
 
   def create
-    raise 'add some code'
-    # create a new URL record
+    url =  params[:url];
+    @url =Url.all
+    keyCode = (0...5).map { (65 + rand(26)).chr }.join
+    while (!@url.find_by(short_url: keyCode).nil?)
+      keyCode = (0...5).map { (65 + rand(26)).chr }.join
+    end
+    @urls = Url.new(original_url: url[:original_url], short_url: keyCode, clicks_count: 0 )
+    if @urls.save
+      redirect_to root_path
+    else
+      flash[:notice] = 'Invalid Url, empty or invalid url formats are not allowed!'
+      redirect_back(fallback_location: root_path)
+    end
   end
 
   def show
-    @url = Url.new(short_url: 'ABCDE', original_url: 'http://google.com', created_at: Time.now)
-    # implement queries
-    @daily_clicks = [
-      ['1', 13],
-      ['2', 2],
-      ['3', 1],
-      ['4', 7],
-      ['5', 20],
-      ['6', 18],
-      ['7', 10],
-      ['8', 20],
-      ['9', 15],
-      ['10', 5]
-    ]
-    @browsers_clicks = [
-      ['IE', 13],
-      ['Firefox', 22],
-      ['Chrome', 17],
-      ['Safari', 7]
-    ]
-    @platform_clicks = [
-      ['Windows', 13],
-      ['macOS', 22],
-      ['Ubuntu', 17],
-      ['Other', 7]
-    ]
+    @url = Url.find_by(short_url: params[:url])
+    if (@url)
+      @clicks = @url.clicks.order('created_at ASC').current_month
+      dailyClicks = Hash.new
+      browser = Hash.new
+      platform = Hash.new
+      @clicks.each do |click|
+        dailyClicks[click.created_at.to_s[...10]] = dailyClicks[click.created_at.to_s[...10]] ? dailyClicks[click.created_at.to_s[...10]] + 1 : 1
+        browser[click.browser] = browser[click.browser] ? browser[click.browser] + 1 : 1
+        platform[click.platform] = platform[click.platform] ? platform[click.platform] + 1 : 1
+      end
+      @daily_clicks = dailyClicks.map{ |key, value| [key, value] }
+      @browsers_clicks = browser.map{ |key, value| [key, value] }
+      @platform_clicks = platform.map{ |key, value| [key, value] }
+    else
+      render plain: '404 page not found!!...'
+    end
   end
 
   def visit
-    # params[:short_url]
-    render plain: 'redirecting to url...'
+    @message = 'redirect'
+    browser = Browser.new(request.env["HTTP_USER_AGENT"])
+    short_url =  params[:short_url]
+    @url = Url.find_by(short_url: short_url)
+    if (@url)
+      @clicks = Click.new(url_id: @url.id, platform: browser.platform.name, browser: browser.name)
+      if (@clicks.save)
+        clickCount = @url.clicks.count
+        @url.update(clicks_count: clickCount)
+      else
+        @message = 'Unable'
+      end
+    else
+      @message = '404'
+    end
   end
 end

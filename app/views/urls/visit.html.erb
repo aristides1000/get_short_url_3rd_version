@@ -1,0 +1,21 @@
+<div class="container text-center">
+  <p class="fs-1">
+    <%= clickConfirmationMessage(@message) %>
+  </p>
+  <% if @url %>
+    <p id="timer" class="text-center fs-1 text-info">3</p>
+    <a id='link' class="text-center link-info fs-2" href="<%= @url.original_url %>"><%= @url.original_url[..40] + '...' %> </a>
+  <% end %>
+</div>
+
+<script>
+  setTimeout(function(){ 
+    window.open(document.getElementById('link').href, "_self");
+  }, 3000);
+
+  let count = 3;
+  setInterval(function(){
+    count--;
+    document.getElementById('timer').textContent = count;
+  }, 1000);
+</script>
